@@ -262,7 +262,7 @@ function createVis2(selector, arrest_data) {
     // Add right y-axis (arrest rate)
     svg.append("g")
     .attr("transform", `translate(${width - margin.right},0)`)
-    .call(d3.axisRight(y_right).ticks(5).tickFormat(d => d + "%"));
+    .call(d3.axisRight(y_right).ticks(5).tickFormat(d => Math.floor(100*d) + "%"));
     
 
     // add total stops bar
