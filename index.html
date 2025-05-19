@@ -17,8 +17,11 @@
             Using data from <a href="https://openpolicing.stanford.edu" target="_blank">the Stanford Open Policing Project</a>, we can take a look at how traffic stops give insight into the biases of police.
         </p>
 
+        <br>This map takes data from specific cities with the search and contraband found data available. After processing the data in R, the stop, search, and "hit" rates of finding contraband were calculated per race. 
+        These rates were determined by comparing the rates of stops and searches to the total population of each race within the city. This additional population data was collected from the 2020 US Census. 
+        The sizes of the dots correspond to the size of the sample from that city, while data from each race is associated with a certain color.
+        For the "All populations" setting, colored dots indicate locations of probable racial disparity/discrimination in policing.<br><br>
         Population of interest: <select id="xVariable" class="variable"></select>
-        <br>Colored dots indicate locations of probable racial disparity/discrimination in policing
 
         <div class="visualization" id="vis"></div> <!--  Will hold our visualization (SVG) -->
 
