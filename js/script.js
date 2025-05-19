@@ -190,6 +190,7 @@ function createVis2(selector, arrest_data) {
     const width = 800;
     const height = 400;
     const margin = {top: 20, right: 50, bottom: 40, left: 50};
+    const animation_duration = 800;
 
     // get the current city selected by the user
     let city = selector.value.toLowerCase().replace(" ", "_");
@@ -261,10 +262,15 @@ function createVis2(selector, arrest_data) {
         .join('rect')
             .attr('class', 'stop-bar')
             .attr('x', d => x(d.race) + x_sub('total'))
-            .attr('y', d => y_left(d.stopped))
-            .attr('height', d => y_left(0) - y_left(d.stopped))
+            .attr('y', y_left(0))
+            .attr('height', 0)
             .attr('width', x_sub.bandwidth())
-            .attr('fill', legendData[0]['color']);
+            .attr('fill', legendData[0]['color'])
+            .transition()
+            .duration(animation_duration)
+            .attr('height', d => y_left(0) - y_left(d.stopped))
+            .attr('y', d => y_left(d.stopped));
+            
     
     // add total arrests bar
     svg.selectAll('.arrest-bar')
@@ -272,10 +278,15 @@ function createVis2(selector, arrest_data) {
         .join('rect')
             .attr('class', 'arrest-bar')
             .attr('x', d => x(d.race) + x_sub('total'))
-            .attr('y', d => y_left(d.arrested))
-            .attr('height', d => y_left(0) - y_left(d.arrested))
+            .attr('y', y_left(0))
             .attr('width', x_sub.bandwidth())
-            .attr('fill', legendData[1]['color']);
+            .attr('height', 0)
+            .attr('fill', legendData[1]['color'])
+            .transition()
+            .duration(animation_duration)
+            .attr('y', d => y_left(d.arrested))
+            .attr('height', d => y_left(0) - y_left(d.arrested));
+            
 
     // add proportion arrested bar
     svg.selectAll('.prop-bar')
@@ -283,10 +294,15 @@ function createVis2(selector, arrest_data) {
         .join('rect')
             .attr('class', 'prop-bar')
             .attr('x', d => x(d.race) + x_sub('proportion'))
-            .attr('y', d => y_right(d.arrested / d.stopped))
-            .attr('height', d => y_right(0) - y_right(d.arrested / d.stopped))
+            .attr('y', d => y_right(0))
             .attr('width', x_sub.bandwidth())
-            .attr('fill', legendData[2]['color']);
+            .attr('height', 0)
+            .attr('fill', legendData[2]['color'])
+            .transition()
+            .duration(animation_duration)
+            .attr('height', d => y_right(0) - y_right(d.arrested / d.stopped))
+            .attr('y', d => y_right(d.arrested / d.stopped));
+            
     
     // add a legend
     const legend = svg.append('g')
