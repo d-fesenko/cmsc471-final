@@ -198,7 +198,7 @@ window.addEventListener('load', init);
 function setupVis2() {
     const width = 800;
     const height = 400;
-    const margin = {top: 20, right: 50, bottom: 40, left: 50};
+    const margin = {top: 20, right: 70, bottom: 40, left: 70};
 
     const svg = d3.select('#race_arrest_vis')
     .append('svg')
@@ -211,7 +211,7 @@ function setupVis2() {
 function createVis2(selector, arrest_data) {
     const width = 800;
     const height = 400;
-    const margin = {top: 20, right: 50, bottom: 40, left: 50};
+    const margin = {top: 50, right: 70, bottom: 40, left: 70};
     const animation_duration = 800;
 
     // get the current city selected by the user
@@ -222,6 +222,8 @@ function createVis2(selector, arrest_data) {
         {label: 'Arrests', color: 'blue'},
         {label: 'Arrest Rate (%)', color: 'steelblue'}
     ]
+
+    
 
     races = ['white', 'asian/pacific islander', 'black', 'hispanic', 'other']
 
@@ -241,7 +243,42 @@ function createVis2(selector, arrest_data) {
     d3.select('#race_arrest_vis').select('svg').selectAll('g').remove();
 
     const g = d3.select('#race_arrest_vis').select('svg').append('g')
+
+    // set up labels
+    // title
+    g.append('text')
+        .attr('x', (width) / 2)
+        .attr('y', margin.top / 2)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '20px')
+        .text('Total Stops and Arrest Rates Across Races in ' + selector.value)
     
+    // left y axis label
+    g.append('text')
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '14px')
+        .attr('transform', 'rotate(-90)')
+        .attr('x', -height / 2)
+        .attr('y', margin.left / 3)
+        .text('Total Stops and Arrests');
+
+    // right y axis label
+     g.append('text')
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '14px')
+        .attr('transform', 'rotate(90)')
+        .attr('x', height / 2)
+        .attr('y', -(width - margin.right / 2))
+        .text('Percentage of Stops Leading to Arrest (%)');
+    
+    // x axis label
+    g.append('text')
+        .attr('x', (width) / 2)
+        .attr('y', height - margin.bottom / 4)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '14px')
+        .text('Race');
+
 
     // outer race groups
     const x = d3.scaleBand()
@@ -449,6 +486,10 @@ function setupVis3() {
     .attr("y2", height / 2 + 4)
     .attr("stroke", "yellow")
     .attr("stroke-width", 4);
+            
+            
+            
+    //: './data/images/car_left.png')
 }
 
 function createVis3(contraband_data) {
@@ -481,7 +522,7 @@ function createVis3(contraband_data) {
     let row3_red = Math.floor(white_percent / 2);
     let row4_red = row3_red;
     if (white_percent % 2 == 1) {
-        row4_red += 1;
+        row3_red += 1;
     }
 
     console.log(`${row1_red}, ${row2_red}`);
