@@ -210,7 +210,14 @@ function createVis2(selector, arrest_data) {
         }
     });
 
-    console.log(bar_data);
+
+    // Get the associated colors for each bar we make
+    const legendData = [
+        {label: "Stops" , color: 'gray'},
+        {label: 'Arrests', color: 'blue'},
+        {label: 'Arrest Rate (%)', color: 'steelblue'}
+    ]
+
 
     d3.select('#race_arrest_vis').selectAll('*').remove();
 
@@ -267,7 +274,7 @@ function createVis2(selector, arrest_data) {
             .attr('y', d => y_left(d.stopped))
             .attr('height', d => y_left(0) - y_left(d.stopped))
             .attr('width', x_sub.bandwidth())
-            .attr('fill', 'grey');
+            .attr('fill', legendData[0]['color']);
     
     // add total arrests bar
     svg.selectAll('.arrest-bar')
@@ -278,7 +285,7 @@ function createVis2(selector, arrest_data) {
             .attr('y', d => y_left(d.arrested))
             .attr('height', d => y_left(0) - y_left(d.arrested))
             .attr('width', x_sub.bandwidth())
-            .attr('fill', 'blue');
+            .attr('fill', legendData[1]['color']);
 
     // add proportion arrested bar
     svg.selectAll('.prop-bar')
@@ -289,7 +296,28 @@ function createVis2(selector, arrest_data) {
             .attr('y', d => y_right(d.arrested / d.stopped))
             .attr('height', d => y_right(0) - y_right(d.arrested / d.stopped))
             .attr('width', x_sub.bandwidth())
-            .attr('fill', 'steelblue');
+            .attr('fill', legendData[2]['color']);
+    
+    // add a legend
+    const legend = svg.append('g')
+        .attr('class', 'legend')
+        .attr('transform', `translate(${width - margin.left - margin.right - 100}, ${margin.top})`);
+    
+    legend.selectAll('rect')
+        .data(legendData)
+        .join('rect')
+        .attr('x', 0)
+        .attr('y', (d, i) => i * 20)
+        .attr('width', 15)
+        .attr('height', 15)
+        .attr('fill', d => d['color'])
+    
+    legend.selectAll('text')
+        .data(legendData)
+        .join('text')
+        .attr('x', 20)
+        .attr('y', (d, i) => i * 20 + 10)
+        .text(d => d['label']);
     
 
     
