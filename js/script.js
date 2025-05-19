@@ -32,6 +32,14 @@ async function init() {
         
         city_selector.addEventListener('change', () => createVis2(city_selector, arrest_data));
     callWhenElementViewable(document.getElementById('race_arrest_vis'), () => createVis2(city_selector, arrest_data))
+
+    let contraband_data = await d3.json('./data/ca_city_data/oakland_contraband.json');
+    //console.log(contraband_data);
+    setupVis3();
+    callWhenElementViewable(document.getElementById('oakland_contraband_vis'), () => createVis3(contraband_data));
+
+
+
     
 
   } catch (err) {
@@ -272,9 +280,10 @@ function createVis2(selector, arrest_data) {
     .attr("transform", `translate(${width - margin.right},0)`)
     .call(d3.axisRight(y_right).ticks(5).tickFormat(d => Math.floor(100*d) + "%"));
     
+    let left_bar = g.append('g');
 
     // add total stops bar
-    g.selectAll('.stop-bar')
+    left_bar.selectAll('.stop-bar')
         .data(bar_data)
         .join('rect')
             .attr('class', 'stop-bar')
@@ -290,7 +299,7 @@ function createVis2(selector, arrest_data) {
             
     
     // add total arrests bar
-    g.selectAll('.arrest-bar')
+    left_bar.selectAll('.arrest-bar')
         .data(bar_data)
         .join('rect')
             .attr('class', 'arrest-bar')
@@ -303,6 +312,30 @@ function createVis2(selector, arrest_data) {
             .duration(animation_duration)
             .attr('y', d => y_left(d.arrested))
             .attr('height', d => y_left(0) - y_left(d.arrested));
+    
+    // add tooltips for the left bar
+    left_bar.selectAll('.stop-bar').on('mouseover', function(event, d) {
+        d3.select('#tooltip_vis_2')
+            .style('display', 'block')
+            .html(
+                `<strong>Race: ${d.race}</strong><br/>
+                Total: ${d.stopped}<br/>
+                Arrested: ${d.arrested}`
+            )
+            .style('left', (event.pageX + 20) + "px")
+            .style('top', (event.pageY - 28) + "px");
+
+        d3.select(this)
+            .style('stroke', 'black')
+            .style('stroke-width', '2px');
+
+    }).on('mouseout', function(event, d) {
+        d3.select('#tooltip_vis_2')
+                    .style('display', 'none');
+
+        d3.select(this)
+            .style('stroke-width', '0px');
+    });
             
 
     // add proportion arrested bar
@@ -319,6 +352,29 @@ function createVis2(selector, arrest_data) {
             .duration(animation_duration)
             .attr('height', d => y_right(0) - y_right(d.arrested / d.stopped))
             .attr('y', d => y_right(d.arrested / d.stopped));
+
+    // add tooltips for the proportion bar
+    g.selectAll('.prop-bar').on('mouseover', function(event, d) {
+        d3.select('#tooltip_vis_2')
+            .style('display', 'block')
+            .html(
+                `<strong>Race: ${d.race}</strong><br/>
+                Proportion: ${Math.round(1000 * d.arrested / d.stopped)/10}%`
+            )
+            .style('left', (event.pageX + 20) + "px")
+            .style('top', (event.pageY - 28) + "px");
+
+        d3.select(this)
+            .style('stroke', 'black')
+            .style('stroke-width', '2px');
+    }).on('mouseout', function(event, d) {
+        d3.select('#tooltip_vis_2')
+                    .style('display', 'none');
+
+        d3.select(this)
+            .style('stroke-width', '0px');
+    });
+
             
     
     // add a legend
@@ -340,10 +396,174 @@ function createVis2(selector, arrest_data) {
         .join('text')
         .attr('x', 20)
         .attr('y', (d, i) => i * 20 + 10)
-        .text(d => d['label']);
+        .text(d => d['label'])
+        .transition()
+        .duration(animation_duration)
+        .attr('x', 20);
 }
 
 
+function setupVis3() {
+    const width = 800;
+    const height = 200;
+    const margin = {top: 20, right: 50, bottom: 40, left: 50};
+
+    const svg = d3.select('#oakland_contraband_vis')
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height)
+    .style('background-color', 'gray');
+
+    // dashed white lines
+    svg.append("line")
+    .attr("x1", 0)
+    .attr("y1", height / 4)
+    .attr("x2", width)
+    .attr("y2", height / 4)
+    .attr("stroke", "white")
+    .attr("stroke-width", 4)
+    .attr("stroke-dasharray", "20,20");
+
+    svg.append("line")
+    .attr("x1", 0)
+    .attr("y1", 3 * height / 4)
+    .attr("x2", width)
+    .attr("y2", 3 * height / 4)
+    .attr("stroke", "white")
+    .attr("stroke-width", 4)
+    .attr("stroke-dasharray", "20,20");
+
+    // double yellow line
+    svg.append("line")
+    .attr("x1", 0)
+    .attr("y1", height / 2 - 4)
+    .attr("x2", width)
+    .attr("y2", height / 2 - 4)
+    .attr("stroke", "yellow")
+    .attr("stroke-width", 4);
+
+    svg.append("line")
+    .attr("x1", 0)
+    .attr("y1", height / 2 + 4)
+    .attr("x2", width)
+    .attr("y2", height / 2 + 4)
+    .attr("stroke", "yellow")
+    .attr("stroke-width", 4);
+}
+
+function createVis3(contraband_data) {
+    const width = 800;
+    const height = 200;
+    const margin = {top: 20, right: 50, bottom: 40, left: 50};
+
+    const g = d3.select('#oakland_contraband_vis').select('svg').append('g');
+
+    // Create 100 cars
+    const num_cars = 50;
+    const car_width = width / num_cars;
+    const car_height = car_width;
+    const spacing = width / num_cars;
+
+    const data = d3.range(num_cars).reverse();
+
+    let black_c_data = contraband_data.find(d => d['race'] == 'black');
+    let black_percent = Math.round(100 * black_c_data['contraband_found_proportion']);
+
+    let white_c_data = contraband_data.find(d => d['race'] == 'white');
+    let white_percent = Math.round(100 * white_c_data['contraband_found_proportion'])
+
+    let row1_red = Math.floor(black_percent / 2);
+    let row2_red = row1_red;
+    if (black_percent % 2 == 1) {
+        row1_red += 1;
+    }
+
+    let row3_red = Math.floor(white_percent / 2);
+    let row4_red = row3_red;
+    if (white_percent % 2 == 1) {
+        row4_red += 1;
+    }
+
+    console.log(`${row1_red}, ${row2_red}`);
+
+    const row1 = g.append('g')
+    row1.selectAll('image')
+        .data(data)
+        .join('image')
+            .attr('xlink:href', (d, i) => (i < row1_red)? './data/images/car_left_red.png' : './data/images/car_left.png')
+            .attr('x', width + car_width)
+            .attr('y', height / 8 - car_height / 2)
+            .attr('width', car_width)
+            .attr('height', car_height)
+        .transition()
+            .delay((d, i) => i * 50)
+            .duration(2000)
+            .ease(d3.easeCubicOut)
+            .attr('x', d => width - car_width - d * spacing);
+    
+    const row2 = g.append('g')
+    row2.selectAll('image')
+        .data(data)
+        .join('image')
+            .attr('xlink:href', (d, i) => (i < row2_red)? './data/images/car_left_red.png' : './data/images/car_left.png')
+            .attr('x', width)
+            .attr('y', 3 * height / 8 - car_height / 2)
+            .attr('width', car_width)
+            .attr('height', car_height)
+        .transition()
+            .delay((d, i) => i * 50)
+            .duration(2000)
+            .ease(d3.easeCubicOut)
+            .attr('x', d => width - car_width - d * spacing);
+
+    
+
+    const row3 = g.append('g')
+    row3.selectAll('image')
+        .data(data)
+        .join('image')
+            .attr('xlink:href', d => (d < row3_red)? './data/images/car_right_red.png' : './data/images/car_right.png')
+            .attr('x', -car_width)
+            .attr('y', 5 * height / 8 - car_height / 2)
+            .attr('width', car_width)
+            .attr('height', car_height)
+        .transition()
+            .delay((d, i) => i * 50)
+            .duration(2000)
+            .ease(d3.easeCubicOut)
+            .attr('x', d => d * spacing);
+    
+    const row4 = g.append('g')
+    row4.selectAll('image')
+        .data(data)
+        .join('image')
+            .attr('xlink:href', d => (d < row4_red)? './data/images/car_right_red.png' : './data/images/car_right.png')
+            .attr('x', -car_width)
+            .attr('y', 7 * height / 8 - car_height / 2)
+            .attr('width', car_width)
+            .attr('height', car_height)
+        .transition()
+            .delay((d, i) => i * 50)
+            .duration(2000)
+            .ease(d3.easeCubicOut)
+            .attr('x', d => d * spacing);
+    
+    g.append('text')
+        .attr('x', width / 2)
+        .attr('y', 13)
+        .attr('text-anchor', 'middle')
+        .attr('fill', 'white')
+        .attr('font-size', '14px')
+        .text('Rates of Contraband with Black Drivers');
+
+    g.append('text')
+        .attr('x', width / 2)
+        .attr('y', height - 5)
+        .attr('text-anchor', 'middle')
+        .attr('fill', 'white')
+        .attr('font-size', '14px')
+        .text('Rates of Contraband with White Drivers');
+}
 
 
 function isElementInView(element) {

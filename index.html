@@ -10,6 +10,11 @@
 <body>
     <div class="container"> <!-- Centers content and sets max width -->
         <h1>Patterns of Patrol</h1>
+        <p>The world recently has been filled with news of racial discrimination within policing practices. 
+            Videos of traffic stops turning foul or even violent are unfortunately commonplace. 
+            Looking at traffic stop data, specifically for some cities in California, do any patterns based on race actually arise?
+            Using data from the Stanford Open Policing Project, we can take a look at how traffic stops give insight into the biases of police.
+        </p>
 
         Population of interest: <select id="xVariable" class="variable"></select>
         <br>Colored dots indicate locations of probable racial disparity/discrimination in policing
@@ -21,7 +26,7 @@
             <svg id="tooltip-chart" width="200" height="100"></svg>
           </div>
 
-        <p>Let's take a closer look at the stop and arrest rates at some of the cities in California.<br>
+        <p>Take a closer look at some of the cities in California. This time, look at the stop and arrest data.<br>
         Note that this is somewhat limited by the number of cities that had the proper arrest data recorded
         </p>
         <label for="cities">Choose a city:</label>
@@ -35,6 +40,29 @@
             <option>Stockton</option>
         </select>
         <div class="visualization" id="race_arrest_vis"></div>
+        <div id="tooltip_vis_2" style="position: absolute; display: none; background: white; border: 1px solid gray; padding: 10px; pointer-events: none;"></div>
+
+        <p>We can see that across every city, the arrest rate for traffic stops where the driver was black is the highest compared to every other race. Out of all of them
+            Oakland seems to have the highest rate out of all of them. A whopping 14% of black drivers that were stopped ended up being arrested! Compare this to the arrest 
+            rate for white drivers: 7.7%. The arrest rate for black drivers is nearly <strong>double</strong> the rate for white drivers.
+        </p>
+
+        <p>
+            At an initial look this does seem to imply that -at least in Oakland- black drivers truly are unfairly treated by police at traffic stops. But in many real life cases, arguments are made that 
+            the police more often than not have just reason to make an arrest, or perhaps to even make a search in the first place, and that they are simply doing their job. 
+            Let's look at how often these reasons actually pop up.
+        </p>
+
+        <div class="visualization" id="oakland_contraband_vis"></div>
+        <div id="tooltip_vis_3" style="position: absolute; display: none; background: white; border: 1px solid gray; padding: 10px; pointer-events: none;"></div>
+
+        <p>
+            For black drivers that were stopped by police, around 14.5 percent, or around 15 out of 100, ended up having contraband found in the vehicle. That seems to match up closely 
+            with what we found for arrest rates, but let's take a look at the same statistic for white drivers. A little over 2% more at 17.1% of white drivers that were stopped were found with contraband. 
+            The percentages seem comparable, but it's important to remember black drivers were arrested at nearly double the rate!
+        </p>
+
+
 
     </div>
     
