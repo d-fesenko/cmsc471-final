@@ -15,6 +15,25 @@ async function init() {
     const us = await d3.json('./data/states-10m.json');
     const data = await d3.json('./data/ca.json');
     createVis(us, data);
+
+    let arrest_data = []
+        let city_selector = document.getElementById("cities_vis_2");
+
+        d3.csv("./data/ca_city_data/race_arrest_ca_cities.csv",
+            function(d) {
+                return d
+            }).then(data => {
+                console.log(data);
+                arrest_data = data;
+
+                createVis2(city_selector, arrest_data);
+            });
+        
+        
+        city_selector.addEventListener('change', () => console.log(city_selector.value));
+        city_selector.addEventListener('change', () => createVis2(city_selector, arrest_data));
+
+
   } catch (err) {
     console.error('Error loading data:', err);
   }
@@ -166,3 +185,136 @@ function createVis(us, data) {
 }
 
 window.addEventListener('load', init);
+
+function createVis2(selector, arrest_data) {
+    const width = 800;
+    const height = 400;
+    const margin = {top: 20, right: 50, bottom: 40, left: 50};
+
+    // get the current city selected by the user
+    let city = selector.value.toLowerCase().replace(" ", "_");
+
+    races = ['white', 'asian/pacific islander', 'black', 'hispanic', 'other']
+
+    // get the data associated with that city
+    let data = arrest_data.find(d => d['city'] == city);
+    
+    let bar_data = races.map(d => {
+        return {
+            race: d,
+            stopped: +data[d],
+            arrested: +data[`${d} arrests`]
+        }
+    });
+
+    console.log(bar_data);
+
+    d3.select('#race_arrest_vis').selectAll('*').remove();
+
+    const svg = d3.select('#race_arrest_vis')
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height);
+    
+
+    // outer race groups
+    const x = d3.scaleBand()
+        .domain(bar_data.map(d => d.race))
+        .range([margin.left, width - margin.right])
+        .paddingInner(0.2);
+
+    // inner groups for both total numbers and proportions
+    const x_sub = d3.scaleBand()
+        .domain(['total', 'proportion'])
+        .range([0, x.bandwidth()])
+        .padding(0.2);
+
+    // left y scale for total numbers
+    const y_left = d3.scaleLinear()
+        .domain([0, d3.max(bar_data, d => d.stopped)])
+        .range([height - margin.bottom, margin.top])
+    
+    //right y scale for proportion values
+    const y_right = d3.scaleLinear()
+        .domain([0, d3.max(bar_data, d => d.arrested / d.stopped)])
+        .range([height - margin.bottom, margin.top])
+
+    // Add x-axis
+    svg.append("g")
+    .attr("transform", `translate(0,${height - margin.bottom})`)
+    .call(d3.axisBottom(x));
+
+    // Add left y-axis (stops/arrests)
+    svg.append("g")
+    .attr('transform', `translate(${margin.left})`)
+    .call(d3.axisLeft(y_left).ticks(5));
+
+    // Add right y-axis (arrest rate)
+    svg.append("g")
+    .attr("transform", `translate(${width - margin.right},0)`)
+    .call(d3.axisRight(y_right).ticks(5).tickFormat(d => d + "%"));
+    
+
+    // add total stops bar
+    svg.selectAll('.stop-bar')
+        .data(bar_data)
+        .join('rect')
+            .attr('class', 'stop-bar')
+            .attr('x', d => x(d.race) + x_sub('total'))
+            .attr('y', d => y_left(d.stopped))
+            .attr('height', d => y_left(0) - y_left(d.stopped))
+            .attr('width', x_sub.bandwidth())
+            .attr('fill', legendData[0]['color']);
+    
+    // add total arrests bar
+    svg.selectAll('.arrest-bar')
+        .data(bar_data)
+        .join('rect')
+            .attr('class', 'arrest-bar')
+            .attr('x', d => x(d.race) + x_sub('total'))
+            .attr('y', d => y_left(d.arrested))
+            .attr('height', d => y_left(0) - y_left(d.arrested))
+            .attr('width', x_sub.bandwidth())
+            .attr('fill', legendData[1]['color']);
+
+    // add proportion arrested bar
+    svg.selectAll('.prop-bar')
+        .data(bar_data)
+        .join('rect')
+            .attr('class', 'prop-bar')
+            .attr('x', d => x(d.race) + x_sub('proportion'))
+            .attr('y', d => y_right(d.arrested / d.stopped))
+            .attr('height', d => y_right(0) - y_right(d.arrested / d.stopped))
+            .attr('width', x_sub.bandwidth())
+            .attr('fill', legendData[2]['color']);
+    
+    // add a legend
+    const legend = svg.append('g')
+        .attr('class', 'legend')
+        .attr('transform', `translate(${width - margin.left - margin.right - 100}, ${margin.top})`);
+    
+    legend.selectAll('rect')
+        .data(legendData)
+        .join('rect')
+        .attr('x', 0)
+        .attr('y', (d, i) => i * 20)
+        .attr('width', 15)
+        .attr('height', 15)
+        .attr('fill', d => d['color'])
+    
+    legend.selectAll('text')
+        .data(legendData)
+        .join('text')
+        .attr('x', 20)
+        .attr('y', (d, i) => i * 20 + 10)
+        .text(d => d['label']);
+}
+
+
+const legendData = [
+    {label: "Stops" , color: 'gray'},
+    {label: 'Arrests', color: 'blue'},
+    {label: 'Arrest Rate (%)', color: 'steelblue'}
+]
+
+
