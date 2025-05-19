@@ -14,9 +14,19 @@
         Population of interest: <select id="xVariable" class="variable"></select>
         <br>Colored dots indicate locations of probable racial disparity/discrimination in policing
 
-        <div id="vis"></div> <!--  Will hold our visualization (SVG) -->
+        <div class="visualization" id="vis"></div> <!--  Will hold our visualization (SVG) -->
 
         <div id="tooltip" style="display:none"></div> 
+
+        <p>Let's take a closer look at the arrest rates at some of the cities in California</p>
+        <label for="cities">Choose a city:</label>
+
+        <!-- Add cities to the dropdown accordingly, this is for looking at race versus arrest data -->
+        <select name="cities" id="cities_vis_2">
+            <option>Oakland</option>
+            <option>San Diego</option>
+        </select>
+        <div class="visualization" id="race_arrest_vis"></div>
 
     </div>
     

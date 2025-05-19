@@ -189,6 +189,17 @@ function createVis(map, data) {
 
 }
 
+function createVis2() {
+    const width = 980;
+    const height = 680;
+  
+    const svg = d3.select('#race_arrest_vis')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+        .append('g');
+}
+
 // Asynchronous initialization function
 async function init() {
     try {
@@ -203,6 +214,8 @@ async function init() {
         // Pass loaded data to visualization function
         createVis(us, data);
         //createVis(ca, data);
+
+
     } catch (error) {
         // Catch and report errors clearly
         console.error('Error loading data:', error);
