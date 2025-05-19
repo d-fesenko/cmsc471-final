@@ -7,7 +7,7 @@ Unfortunately, due to constraints within Github and the libraries we were using,
 we were utilizing. To account for this, we went much narrower than many other exploratory artifacts went, focusing on California, and then Oakland specifically.
 
 Our work was primarily divided as such: \
-Ashwin: Worked primarily on Visualization 2 and 3, as they were simpler to implement and worked with less data \
+Ashwin: Worked primarily on Visualization 2 and 3, and worked on writing \
 Daniel: Worked on tooltips for Visualization 1, and worked on a lot of exploratory analysis and writing \
 Serena: Created Visualization 1, and did data processing for it, as well as working on formatting 
 
