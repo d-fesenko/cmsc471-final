@@ -1,16 +1,30 @@
 /* Reset default styles */
 * {
     font-family: Arial, sans-serif;
-    max-width: 800px;
+    max-width: 1000px;
     margin: 0px auto;
     line-height: 1.8;
 }
 
 /* Container styling for layout */
 .container {
-    max-width: 800px;
+    max-width: 1000px;
     margin: 2rem auto;
     font-family: Arial, sans-serif;
+}
+
+.visualization {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#race_arrest_vis {
+    padding: 8%
+}
+
+#oakland_contraband_vis {
+    padding: 8%
 }
 
 #vis svg {
