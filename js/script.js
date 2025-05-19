@@ -353,7 +353,6 @@ async function init() {
             });
         
         
-        city_selector.addEventListener('change', () => console.log(city_selector.value));
         city_selector.addEventListener('change', () => createVis2(city_selector, arrest_data));
 
 
