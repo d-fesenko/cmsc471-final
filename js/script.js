@@ -2,7 +2,7 @@
 
 const race = ['api', 'blk', 'hsp', 'wht', 'na'];
 const colorScale = [
-  "lightgreen",      // api
+  "green",      // api
   "cornflowerblue",  // blk
   "crimson",         // hsp
   "purple",          // wht
@@ -13,7 +13,7 @@ const options = ['All Populations', 'White', 'Black', 'Hispanic', 'Asian/Pacific
 async function init() {
   try {
     const us = await d3.json('./data/states-10m.json');
-    const data = await d3.json('./data/ca.json');
+    const data = await d3.json('./data/all_cities.json');
     createVis(us, data);
 
     let arrest_data = []
@@ -49,25 +49,32 @@ async function init() {
 
 
 function createVis(us, data) {
-  const width = 980;
-  const height = 680;
+  const width = 1200;
+    const height = 700;
+
+    const zoom = d3.zoom()
+        .scaleExtent([1, 8])
+        .on("zoom", zoomed);
 
   // SVG container
   const svg = d3.select('#vis')
+  //.attr("viewBox", [0-60, 0-20, width+75, height+40])
     .append('svg')
       .attr('width', width)
       .attr('height', height)
-    .append('g');
+    .append('g')
+    .on("click", reset);;
 
   const statesGeo = topojson.feature(us, us.objects.states);
   const projection = d3.geoAlbersUsa()
-    .fitExtent([[20, 20], [width - 20, height - 20]], statesGeo);
+    .fitExtent([[20, 20], [width - 240, height - 20]], statesGeo);
   const path = d3.geoPath().projection(projection);
 
   // Draw states fill
   svg.append('g')
     .selectAll('path')
     .data(statesGeo.features)
+    .on("click", clicked)
     .join('path')
       .attr('d', path)
       .attr('fill', 'lightgray');
@@ -80,6 +87,37 @@ function createVis(us, data) {
     .attr('stroke', 'white')
     .attr('stroke-linejoin', 'round');
 
+    svg.call(zoom);
+
+    function reset() {
+      svg.transition().style("fill", null);
+      svg.transition().duration(750).call(
+        zoom.transform,
+        d3.zoomIdentity,
+        d3.zoomTransform(svg.node()).invert([width / 2, height / 2])
+      );
+    }
+  
+    function clicked(event, d) {
+      const [[x0, y0], [x1, y1]] = path.bounds(d);
+      event.stopPropagation();
+      svg.transition().style("fill", null);
+      svg.transition().duration(750).call(
+        zoom.transform,
+        d3.zoomIdentity
+          .translate(width / 2, height / 2)
+          .scale(Math.min(8, 0.9 / Math.max((x1 - x0) / width, (y1 - y0) / height)))
+          .translate(-(x0 + x1) / 2, -(y0 + y1) / 2),
+        d3.pointer(event, svg.node())
+      );
+    }
+  
+    function zoomed(event) {
+      const {transform} = event;
+      svg.attr("transform", transform);
+      svg.attr("stroke-width", 1 / transform.k);
+    };
+
   // Color mapping per option
   const colorMap = {
     'All Populations':        '#888',
@@ -87,6 +125,14 @@ function createVis(us, data) {
     'Black':                  colorScale[race.indexOf('blk')],
     'Hispanic':               colorScale[race.indexOf('hsp')],
     'Asian/Pacific Islander': colorScale[race.indexOf('api')]
+  };
+
+  const opacityMap = {
+    'All Populations':        .75,
+    'White':                  d => d.search_wht / d.search_wht/5,
+    'Black':                  d => d.search_blk / d.search_wht/5,
+    'Hispanic':               d => d.search_hsp / d.search_wht/5,
+    'Asian/Pacific Islander': d => d.search_api / d.search_wht/5
   };
 
   // Accessor functions for sizing
@@ -114,7 +160,7 @@ function createVis(us, data) {
       .attr('cy', d => projection([d.longitude, d.latitude])[1])
       .attr('r', d => radiusScale(accessors['All Populations'](d)))
       .style('fill',   colorMap['All Populations'])
-      .style('fill-opacity', '0.75')
+      .style('fill-opacity', opacityMap['All Populations'])
 
   points
     .on('mouseover', function(event, d) {
@@ -183,12 +229,15 @@ function createVis(us, data) {
     const sel      = d3.select(this).property('value');
     const accessor = accessors[sel];
     const col      = colorMap[sel];
+    const opac      = opacityMap[sel];
+
 
     points
       .transition().duration(750)
         .attr('r',    d => radiusScale(accessor(d)))
         .style('fill',   col)
-        .style('stroke', col);
+        .style('stroke', col)
+        .style('fill-opacity', opac);
   });
 }
 
