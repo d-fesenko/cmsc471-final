@@ -11,7 +11,7 @@ Ashwin: Worked primarily on Visualization 2 and 3, and worked on writing \
 Daniel: Worked on tooltips for Visualization 1, and worked on a lot of exploratory analysis and writing \
 Serena: Created Visualization 1, and did data processing for it, as well as working on formatting 
 
-External processing of the original data files provided by the Stanford Open Policing Project was done using R and the Pandas library in Python.
+External processing of the original data files provided by the Stanford Open Policing Project was done using R and the Pandas library in Python. Beyond the Open Policing Project data, population and demogrphic data was used from the 2020 US Census. Additionally, our visualizations are partly inspired by several labs from the CMSC471 class.
 
 
 
