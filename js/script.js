@@ -38,10 +38,6 @@ async function init() {
     setupVis3();
     callWhenElementViewable(document.getElementById('oakland_contraband_vis'), () => createVis3(contraband_data));
 
-
-
-    
-
   } catch (err) {
     console.error('Error loading data:', err);
   }
@@ -120,16 +116,29 @@ function createVis(us, data) {
 
   // Color mapping per option
   const colorMap = {
-    'All Populations':        '#888',
+    'All Populations':        d => colorScale[race.indexOf(indexOfMin(d.hit_api, d.hit_blk, d.hit_hsp, d.hit_wht))],
     'White':                  colorScale[race.indexOf('wht')],
     'Black':                  colorScale[race.indexOf('blk')],
     'Hispanic':               colorScale[race.indexOf('hsp')],
     'Asian/Pacific Islander': colorScale[race.indexOf('api')]
   };
 
+  function indexOfMin(a, b, c, d) {
+    if (a*1.2 < b && a*1.2 < c && a*1.2 < d) {
+      return "api"
+    } else if (b*1.2 < a && b*1.2 < c && b*1.2 < d) {
+      return "blk"
+    } else if (c*1.2 < a && c*1.2 < b && c*1.2 < d) {
+      return "hsp"
+    } else if (d*1.2 < a && d*1.2 < b && d*1.2 < c){
+      return "wht"
+    } 
+    return "na"
+  };
+
   const opacityMap = {
-    'All Populations':        .75,
-    'White':                  d => d.search_wht / d.search_wht/5,
+    'All Populations':        .5,
+    'White':                  .5,
     'Black':                  d => d.search_blk / d.search_wht/5,
     'Hispanic':               d => d.search_hsp / d.search_wht/5,
     'Asian/Pacific Islander': d => d.search_api / d.search_wht/5

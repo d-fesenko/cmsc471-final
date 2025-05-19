@@ -1,6 +1,6 @@
 /* Reset default styles */
 * {
-    font-family: Arial, sans-serif;
+    font-family: Verdana, sans-serif;
     max-width: 1000px;
     margin: 0px auto;
     line-height: 1.8;
@@ -10,7 +10,6 @@
 .container {
     max-width: 1000px;
     margin: 2rem auto;
-    font-family: Arial, sans-serif;
 }
 
 .visualization {
