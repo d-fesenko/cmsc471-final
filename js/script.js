@@ -39,7 +39,7 @@ function createVis(map, data) {
     .attr("d", path)
     .attr("fill", "lightgray")
     //.on("click", clicked)
-      .on('mouseover', function (event, d) {
+      /*.on('mouseover', function (event, d) {
         d3.select('#tooltip')
              // if you change opacity to hide it, you should also change opacity here
             .style("display", 'block') // Make the tooltip visible
@@ -57,7 +57,7 @@ function createVis(map, data) {
             d3.select(this) // Refers to the hovered circle
             .style('stroke', 'black')
             .style('stroke-width', '0px')
-    });
+    })*/;
 
   /*const states = g.append("g")
     .attr("cursor", "pointer")
@@ -122,26 +122,69 @@ function createVis(map, data) {
                 .style("stroke-opacity", 1)
                 .style("stroke-width", 1)
                 .on('mouseover', function (event, d) {
-                    // console.log(d) // See the data point in the console for debugging
+                    const races = ['api', 'blk', 'hsp', 'wht'];
+                    const raceLabels = ['API', 'Black', 'Hispanic', 'White'];
+                    const searchRates = [d.search_api, d.search_blk, d.search_hsp, d.search_wht];
+                
                     d3.select('#tooltip')
-                         // if you change opacity to hide it, you should also change opacity here
-                        .style("display", 'block') // Make the tooltip visible
-                        .html( // Change the html content of the <div> directly
-                        `<strong>${d.city}</strong><br/>`)
-                        .style("left", (event.pageX + 20) + "px")
-                        .style("top", (event.pageY - 28) + "px");
-                    d3.select(this) // Refers to the hovered circle
-                        .style('fill-opacity', 1)
-                })
+                        .style('display', 'block')
+                        .style('left', (event.pageX + 20) + 'px')
+                        .style('top', (event.pageY - 28) + 'px');
+
+                    d3.select('#tooltip-title').text(`${d.city}: Search Rate by Race`);
+                
+                    const svg = d3.select('#tooltip-chart');
+                    svg.selectAll("*").remove(); // Clear previous
+                
+                    const margin = {top: 10, right: 10, bottom: 20, left: 25};
+                    const width = +svg.attr("width") - margin.left - margin.right;
+                    const height = +svg.attr("height") - margin.top - margin.bottom;
+                
+                    const x = d3.scaleBand()
+                        .domain(raceLabels)
+                        .range([0, width])
+                        .padding(0.1);
+                
+                    const y = d3.scaleLinear()
+                        .domain([0, d3.max(searchRates)])
+                        .nice()
+                        .range([height, 0]);
+                
+                    const chart = svg.append("g")
+                        .attr("transform", `translate(${margin.left},${margin.top})`);
+                
+                    chart.selectAll("rect")
+                        .data(searchRates)
+                        .enter()
+                        .append("rect")
+                        .attr("x", (_, i) => x(raceLabels[i]))
+                        .attr("y", d => y(d))
+                        .attr("width", x.bandwidth())
+                        .attr("height", d => height - y(d))
+                        .attr("fill", (_, i) => colorScale[i]);
+                
+                    chart.append("g")
+                        .attr("transform", `translate(0,${height})`)
+                        .call(d3.axisBottom(x).tickSize(0))
+                        .selectAll("text")
+                        .style("font-size", "10px");
+                
+                    chart.append("g")
+                        .call(d3.axisLeft(y).ticks(4).tickFormat(d3.format(".0%")))
+                        .selectAll("text")
+                        .style("font-size", "10px");
+                    
+                    d3.select(this).style('fill-opacity', 1);
+                })                
                 .on("mouseout", function (event, d) {
-                    d3.select('#tooltip')
-                      .style('display', 'none') // Hide tooltip when cursor leaves
-                    d3.select(this) // Refers to the hovered circle
-                    .style('fill-opacity', d => d.hit_disp*4)
-                    .style("stroke", d => colorScale[race.indexOf(d.disp)])
-                    .style("stroke-opacity", 1)
-                    .style("stroke-width", 1)
+                    d3.select('#tooltip').style('display', 'none');
+                    d3.select(this)
+                        .style('fill-opacity', d => d.hit_disp * 4)
+                        .style("stroke", d => colorScale[race.indexOf(d.disp)])
+                        .style("stroke-opacity", 1)
+                        .style("stroke-width", 1);
                 })
+                
             ;}
         );
 
