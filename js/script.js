@@ -1,193 +1,190 @@
-const race = ['api', 'blk', 'hsp', 'wht', 'na']
-const colorScale = ["lightgreen", "cornflowerblue", "crimson", "purple", "black"]//d3.scaleOrdinal(race, d3.schemeSet2); // d3.schemeSet2 is a set of predefined colors. 
-const options = ['All Populations', 'Black', 'Hispanic', 'Asian/Pacific Islander']
+// script.js
 
-function createVis(map, data) {
-    // We'll build our visualization here
-    const width = 980;
-    const height = 680;
-  
-    const svg = d3.select('#vis')
-   .append('svg')
-   .attr('width', width)
-   .attr('height', height)
-   .append('g');
-    // we use a square canvas 
-   //.attr('transform', `translate(${width / 2},${height / 2})`);
+const race = ['api', 'blk', 'hsp', 'wht', 'na'];
+const colorScale = [
+  "lightgreen",      // api
+  "cornflowerblue",  // blk
+  "crimson",         // hsp
+  "purple",          // wht
+  "black"            // na
+];
+const options = ['All Populations', 'White', 'Black', 'Hispanic', 'Asian/Pacific Islander'];
 
-   const path = d3.geoPath();
+async function init() {
+  try {
+    const us = await d3.json('./data/states-10m.json');
+    const data = await d3.json('./data/ca.json');
+    createVis(us, data);
 
-   const g = svg.append("g");
+    let arrest_data = []
+        let city_selector = document.getElementById("cities_vis_2");
 
-   const projection = d3
-    .geoMercator()
-    .center([-119, 37.4])
-    .scale((1 << 18) / (28 * Math.PI))
-    .translate([320, 320])
+        d3.csv("./data/ca_city_data/race_arrest_ca_cities.csv",
+            function(d) {
+                return d
+            }).then(data => {
+                console.log(data);
+                arrest_data = data;
 
-  const pathGenerator = d3.geoPath(projection);
+                createVis2(city_selector, arrest_data);
+            });
+        
+        
+        city_selector.addEventListener('change', () => console.log(city_selector.value));
+        city_selector.addEventListener('change', () => createVis2(city_selector, arrest_data));
 
-  svg.append("path")
-    .attr("d", pathGenerator(map))
-    .attr("fill", "lightgray");
 
-    const states = g.append("g")
-    .attr("cursor", "pointer")
-    .selectAll("path")
-    .data(topojson.feature(map, map.objects.states).features)
-    .join("path")
-    .attr("d", path)
-    .attr("fill", "lightgray")
-    //.on("click", clicked)
-      .on('mouseover', function (event, d) {
-        d3.select('#tooltip')
-             // if you change opacity to hide it, you should also change opacity here
-            .style("display", 'block') // Make the tooltip visible
-            .html( // Change the html content of the <div> directly
-            `<strong>${d.properties.state_info.state}</strong><br/>`)
-            .style("left", (event.pageX + 20) + "px")
-            .style("top", (event.pageY - 28) + "px");
-        d3.select(this) // Refers to the hovered circle
-            .style('stroke', 'black')
-            .style('stroke-width', '4px')
-        })
-        .on("mouseout", function (event, d) {
-            d3.select('#tooltip')
-            .style('display', 'none') // Hide tooltip when cursor leaves
-            d3.select(this) // Refers to the hovered circle
-            .style('stroke', 'black')
-            .style('stroke-width', '0px')
+  } catch (err) {
+    console.error('Error loading data:', err);
+  }
+}
+
+
+function createVis(us, data) {
+  const width = 980;
+  const height = 680;
+
+  // SVG container
+  const svg = d3.select('#vis')
+    .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+    .append('g');
+
+  const statesGeo = topojson.feature(us, us.objects.states);
+  const projection = d3.geoAlbersUsa()
+    .fitExtent([[20, 20], [width - 20, height - 20]], statesGeo);
+  const path = d3.geoPath().projection(projection);
+
+  // Draw states fill
+  svg.append('g')
+    .selectAll('path')
+    .data(statesGeo.features)
+    .join('path')
+      .attr('d', path)
+      .attr('fill', 'lightgray');
+
+  // Draw state borders
+  svg.append('path')
+    .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
+    .attr('d', path)
+    .attr('fill', 'none')
+    .attr('stroke', 'white')
+    .attr('stroke-linejoin', 'round');
+
+  // Color mapping per option
+  const colorMap = {
+    'All Populations':        '#888',
+    'White':                  colorScale[race.indexOf('wht')],
+    'Black':                  colorScale[race.indexOf('blk')],
+    'Hispanic':               colorScale[race.indexOf('hsp')],
+    'Asian/Pacific Islander': colorScale[race.indexOf('api')]
+  };
+
+  // Accessor functions for sizing
+  const accessors = {
+    'All Populations':        d => d.total_stops,
+    'White':                  d => d.total_stops * d.search_wht,
+    'Black':                  d => d.total_stops * d.search_blk,
+    'Hispanic':               d => d.total_stops * d.search_hsp,
+    'Asian/Pacific Islander': d => d.total_stops * d.search_api
+  };
+
+  // Shared radius scale based on max total_stops
+  const maxStops = d3.max(data, d => d.total_stops);
+  const radiusScale = d3.scaleSqrt()
+    .domain([0, maxStops])
+    .range([5, 25]);
+
+  // Draw circles (initial: All Populations)
+  const points = svg.append('g')
+    .selectAll('circle')
+    .data(data)
+    .join('circle')
+      .attr('class', 'points')
+      .attr('cx', d => projection([d.longitude, d.latitude])[0])
+      .attr('cy', d => projection([d.longitude, d.latitude])[1])
+      .attr('r', d => radiusScale(accessors['All Populations'](d)))
+      .style('fill',   colorMap['All Populations'])
+      .style('fill-opacity', '0.75')
+
+  points
+    .on('mouseover', function(event, d) {
+      const raceLabels  = ['API','Black','Hispanic','White'];
+      const searchRates = [d.search_api, d.search_blk, d.search_hsp, d.search_wht];
+
+      d3.select('#tooltip')
+        .style('display', 'block')
+        .style('left', (event.pageX + 20) + 'px')
+        .style('top',  (event.pageY - 28) + 'px');
+
+      d3.select('#tooltip-title').text(`${d.city}: Search Rate by Race`);
+      const svgT = d3.select('#tooltip-chart');
+      svgT.selectAll('*').remove();
+
+      const margin = {top:10, right:10, bottom:20, left:25};
+      const w = +svgT.attr('width')  - margin.left - margin.right;
+      const h = +svgT.attr('height') - margin.top  - margin.bottom;
+
+      const xScale = d3.scaleBand()
+        .domain(raceLabels)
+        .range([0, w])
+        .padding(0.1);
+      const yScale = d3.scaleLinear()
+        .domain([0, d3.max(searchRates)])
+        .nice()
+        .range([h, 0]);
+
+      const chart = svgT.append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+
+      chart.selectAll('rect')
+        .data(searchRates)
+        .join('rect')
+          .attr('x', (_, i) => xScale(raceLabels[i]))
+          .attr('y', d => yScale(d))
+          .attr('width',  xScale.bandwidth())
+          .attr('height', d => h - yScale(d))
+          .attr('fill',   (_, i) => colorScale[i]);
+
+      chart.append('g')
+        .attr('transform', `translate(0,${h})`)
+        .call(d3.axisBottom(xScale).tickSize(0))
+        .selectAll('text').style('font-size','10px');
+
+      chart.append('g')
+        .call(d3.axisLeft(yScale).ticks(4).tickFormat(d3.format('.0%')))
+        .selectAll('text').style('font-size','10px');
+    })
+    .on('mouseout', function(event, d) {
+      d3.select('#tooltip').style('display','none')
     });
 
-  /*const states = g.append("g")
-    .attr("cursor", "pointer")
-    .selectAll("path")
-    .data(topojson.feature(map, map.objects.states).features)
-    //.data(map.features)
-    .join("path")
-    .attr("d", path)
-    .on('mouseover', function (event, d) {
-        d3.select('#tooltip')
-             // if you change opacity to hide it, you should also change opacity here
-            .style("display", 'block') // Make the tooltip visible
-            .html( // Change the html content of the <div> directly
-            `<strong>${d.properties.state_info.state}</strong><br/>%`)
-            .style("left", (event.pageX + 20) + "px")
-            .style("top", (event.pageY - 28) + "px");
-        d3.select(this) // Refers to the hovered circle
-            .style('stroke', 'black')
-            .style('stroke-width', '4px')
-        });*/
+  // Build and populate dropdown
+  const dropdown = d3.select('#xVariable');
+  dropdown
+    .selectAll('option')
+    .data(options)
+    .join('option')
+      .attr('value', d => d)
+      .text(d => d);
+  dropdown.property('value', 'All Populations');
 
-    states.append("title")
-    .text(d => d.properties.name);
+  // Update circles on race change
+  dropdown.on('change', function() {
+    const sel      = d3.select(this).property('value');
+    const accessor = accessors[sel];
+    const col      = colorMap[sel];
 
-    g.append("path")
-        .attr("fill", "none")
-        .attr("stroke", "white")
-        .attr("stroke-linejoin", "round")
-        .attr("d", path(topojson.mesh(map, map.objects.states, (a, b) => a !== b)));
-        //.attr("d", path(topojson.mesh(map, map.features, (a, b) => a !== b)));
-
-//    const g = svg.append("g");
-
-//    let counties_topo = topojson.feature(ca, ca.objects);
-//   console.log(counties_topo);
-
-//   const counties = g.append("g")
-//     .attr("cursor", "pointer")
-//     .selectAll("path")
-//     .data(topojson.feature(ca, ca.features).features)
-//     .join("path")
-//     .attr("d", path)
-
-//     g.append("path")
-//     .attr("fill", "none")
-//     .attr("stroke", "white")
-//     .attr("stroke-linejoin", "round")
-//     .attr("d", path(topojson.mesh(ca, ca.features, (a, b) => a !== b)));
-
-    svg.selectAll('.points')
-        .data(data)
-        .join(
-            function(enter) {
-                return enter
-                .append('circle')
-                .attr('class', 'points')
-                .attr('transform', ({longitude, latitude}) => `translate(${projection([longitude, latitude]).join(",")})`)
-                .attr('r', d => d.total_stops/1000000*100)
-                .style('fill-opacity', d => d.hit_disp*4)
-                .style('fill', d => colorScale[race.indexOf(d.disp)])
-                .style("stroke", d => colorScale[race.indexOf(d.disp)])
-                .style("stroke-opacity", 1)
-                .style("stroke-width", 1)
-                .on('mouseover', function (event, d) {
-                    // console.log(d) // See the data point in the console for debugging
-                    d3.select('#tooltip')
-                         // if you change opacity to hide it, you should also change opacity here
-                        .style("display", 'block') // Make the tooltip visible
-                        .html( // Change the html content of the <div> directly
-                        `<strong>${d.city}</strong><br/>`)
-                        .style("left", (event.pageX + 20) + "px")
-                        .style("top", (event.pageY - 28) + "px");
-                    d3.select(this) // Refers to the hovered circle
-                        .style('fill-opacity', 1)
-                })
-                .on("mouseout", function (event, d) {
-                    d3.select('#tooltip')
-                      .style('display', 'none') // Hide tooltip when cursor leaves
-                    d3.select(this) // Refers to the hovered circle
-                    .style('fill-opacity', d => d.hit_disp*4)
-                    .style("stroke", d => colorScale[race.indexOf(d.disp)])
-                    .style("stroke-opacity", 1)
-                    .style("stroke-width", 1)
-                })
-            ;}
-        );
-
-    /*function(enter){ 
-            return  enter
-            .append('circle')
-            .attr('cx', d => xScale(d.x))
-            .attr('cy', d => yScale(d.y))
-            .attr('r', 5)
-            .style('fill', d => d.color)
-            // Important. All new circles should be associated with the point class
-            .style('opacity', 0)
-            .attr('class', 'point')
-          },
-            // We know we want to changes their coordinates
-        function(update){ 
-            return  update
-            .transition()
-            .attr('cx', d => xScale(d.x))
-            .attr('cy', d => yScale(d.y))
-        }, 
-          // We know we want to remove an element if its associated data point is removed
-        function(exit){ 
-            return  exit
-            .transition()
-            .style('opacity', 0)
-            .remove()
-        }
-    )
-    .transition()
-    //.attr('cx', d => xScale(d.x))
-    //.attr('cy', d => yScale(d.y))
-    .style('opacity', 1)*/
-
-    d3.selectAll('.variable')
-    // loop over each dropdown button
-        .each(function() {
-            d3.select(this).selectAll('myOptions')
-            .data(options)
-            .enter()
-            .append('option')
-            .text(d => d) // The displayed text
-            .attr("value",d => d) // The actual value used in the code
-        });
-
+    points
+      .transition().duration(750)
+        .attr('r',    d => radiusScale(accessor(d)))
+        .style('fill',   col)
+        .style('stroke', col);
+  });
 }
+
+window.addEventListener('load', init);
 
 function createVis2(selector, arrest_data) {
     const width = 800;
@@ -210,21 +207,14 @@ function createVis2(selector, arrest_data) {
         }
     });
 
-
-    // Get the associated colors for each bar we make
-    const legendData = [
-        {label: "Stops" , color: 'gray'},
-        {label: 'Arrests', color: 'blue'},
-        {label: 'Arrest Rate (%)', color: 'steelblue'}
-    ]
-
+    console.log(bar_data);
 
     d3.select('#race_arrest_vis').selectAll('*').remove();
 
     const svg = d3.select('#race_arrest_vis')
-        .append('svg')
-        .attr('width', width)
-        .attr('height', height);
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height);
     
 
     // outer race groups
@@ -318,49 +308,13 @@ function createVis2(selector, arrest_data) {
         .attr('x', 20)
         .attr('y', (d, i) => i * 20 + 10)
         .text(d => d['label']);
-    
-
-    
 }
 
 
-// Asynchronous initialization function
-async function init() {
-    try {
-        let us = await d3.json("./data/states-albers-10m.json");
-        //let ca = await d3.json("./data/California_Counties.geojson");
-        let data = await d3.json("./data/ca.json");
-        
-        console.log('Map data:', us);
-        //console.log('Map data:', ca);
-        console.log('Stops data:', data);
-        
-        // Pass loaded data to visualization function
-        createVis(us, data);
-        //createVis(ca, data);
-
-        let arrest_data = []
-        let city_selector = document.getElementById("cities_vis_2");
-
-        d3.csv("./data/ca_city_data/race_arrest_ca_cities.csv",
-            function(d) {
-                return d
-            }).then(data => {
-                console.log(data);
-                arrest_data = data;
-
-                createVis2(city_selector, arrest_data);
-            });
-        
-        
-        city_selector.addEventListener('change', () => createVis2(city_selector, arrest_data));
+const legendData = [
+    {label: "Stops" , color: 'gray'},
+    {label: 'Arrests', color: 'blue'},
+    {label: 'Arrest Rate (%)', color: 'steelblue'}
+]
 
 
-    } catch (error) {
-        // Catch and report errors clearly
-        console.error('Error loading data:', error);
-    }
-}
-
-// Trigger data loading and visualization when the window loads
-window.addEventListener('load', init);
