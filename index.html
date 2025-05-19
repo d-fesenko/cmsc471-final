@@ -16,7 +16,10 @@
 
         <div class="visualization" id="vis"></div> <!--  Will hold our visualization (SVG) -->
 
-        <div id="tooltip" style="display:none"></div> 
+        <div id="tooltip" style="position: absolute; display: none; background: white; border: 1px solid gray; padding: 10px; pointer-events: none;">
+            <div id="tooltip-title" style="font-weight: bold; margin-bottom: 5px;"></div>
+            <svg id="tooltip-chart" width="200" height="100"></svg>
+          </div>
 
         <p>Let's take a closer look at the stop and arrest rates at some of the cities in California.<br>
         Note that this is somewhat limited by the number of cities that had the proper arrest data recorded
