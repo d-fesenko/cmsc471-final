@@ -10,10 +10,11 @@
 <body>
     <div class="container"> <!-- Centers content and sets max width -->
         <h1>Patterns of Patrol</h1>
+        <h5>By Ashwin Sawant, Serena Choy, and Daniel Fesenko</h5>
         <p>The world recently has been filled with news of racial discrimination within policing practices. 
             Videos of traffic stops turning foul or even violent are unfortunately commonplace. 
-            Looking at traffic stop data, specifically for some cities in California, do any patterns based on race actually arise?
-            Using data from the Stanford Open Policing Project, we can take a look at how traffic stops give insight into the biases of police.
+            Looking at traffic stop data, specifically for California and its cities, do any patterns based on race actually arise?
+            Using data from <a href="https://openpolicing.stanford.edu" target="_blank">the Stanford Open Policing Project</a>, we can take a look at how traffic stops give insight into the biases of police.
         </p>
 
         Population of interest: <select id="xVariable" class="variable"></select>
@@ -57,7 +58,9 @@
         <h2>Contraband Rates in Oakland</h2>
         <div class="visualization" id="oakland_contraband_vis"></div>
         <div id="tooltip_vis_3" style="position: absolute; display: none; background: white; border: 1px solid gray; padding: 10px; pointer-events: none;"></div>
-
+        <div id="key_vis_3"><div><img src="./data/images/car_right.png" width="60" height="40" style="object-fit: contain;"></img> = No Contraband Found</div>
+            <div><img src="./data/images/car_right_red.png" width="60" height="40" style="object-fit: contain;"></img> = Contraband Found</div>
+        </div>
         <p>
             For black drivers that were stopped by police, around 14.5 percent, or around 15 out of 100, ended up having contraband found in the vehicle. That seems to match up closely 
             with what we found for arrest rates, but let's take a look at the same statistic for white drivers. A little over 2% more at 17.1% of white drivers that were stopped were found with contraband. 
