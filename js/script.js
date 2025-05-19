@@ -26,13 +26,13 @@ async function init() {
                 console.log(data);
                 arrest_data = data;
 
-                createVis2(city_selector, arrest_data);
+                setupVis2(city_selector, arrest_data);
             });
         
         
-        city_selector.addEventListener('change', () => console.log(city_selector.value));
         city_selector.addEventListener('change', () => createVis2(city_selector, arrest_data));
-
+    callWhenElementViewable(document.getElementById('race_arrest_vis'), () => createVis2(city_selector, arrest_data))
+    
 
   } catch (err) {
     console.error('Error loading data:', err);
@@ -186,6 +186,20 @@ function createVis(us, data) {
 
 window.addEventListener('load', init);
 
+
+function setupVis2() {
+    const width = 800;
+    const height = 400;
+    const margin = {top: 20, right: 50, bottom: 40, left: 50};
+
+    const svg = d3.select('#race_arrest_vis')
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height);
+}
+
+
+// Create the Bar Chart Visualizatoin
 function createVis2(selector, arrest_data) {
     const width = 800;
     const height = 400;
@@ -194,6 +208,12 @@ function createVis2(selector, arrest_data) {
 
     // get the current city selected by the user
     let city = selector.value.toLowerCase().replace(" ", "_");
+
+    const legendData = [
+        {label: "Stops" , color: 'gray'},
+        {label: 'Arrests', color: 'blue'},
+        {label: 'Arrest Rate (%)', color: 'steelblue'}
+    ]
 
     races = ['white', 'asian/pacific islander', 'black', 'hispanic', 'other']
 
@@ -210,12 +230,9 @@ function createVis2(selector, arrest_data) {
 
     console.log(bar_data);
 
-    d3.select('#race_arrest_vis').selectAll('*').remove();
+    d3.select('#race_arrest_vis').select('svg').selectAll('g').remove();
 
-    const svg = d3.select('#race_arrest_vis')
-    .append('svg')
-    .attr('width', width)
-    .attr('height', height);
+    const g = d3.select('#race_arrest_vis').select('svg').append('g')
     
 
     // outer race groups
@@ -241,23 +258,23 @@ function createVis2(selector, arrest_data) {
         .range([height - margin.bottom, margin.top])
 
     // Add x-axis
-    svg.append("g")
+    g.append("g")
     .attr("transform", `translate(0,${height - margin.bottom})`)
     .call(d3.axisBottom(x));
 
     // Add left y-axis (stops/arrests)
-    svg.append("g")
+    g.append("g")
     .attr('transform', `translate(${margin.left})`)
     .call(d3.axisLeft(y_left).ticks(5));
 
     // Add right y-axis (arrest rate)
-    svg.append("g")
+    g.append("g")
     .attr("transform", `translate(${width - margin.right},0)`)
     .call(d3.axisRight(y_right).ticks(5).tickFormat(d => Math.floor(100*d) + "%"));
     
 
     // add total stops bar
-    svg.selectAll('.stop-bar')
+    g.selectAll('.stop-bar')
         .data(bar_data)
         .join('rect')
             .attr('class', 'stop-bar')
@@ -273,7 +290,7 @@ function createVis2(selector, arrest_data) {
             
     
     // add total arrests bar
-    svg.selectAll('.arrest-bar')
+    g.selectAll('.arrest-bar')
         .data(bar_data)
         .join('rect')
             .attr('class', 'arrest-bar')
@@ -289,7 +306,7 @@ function createVis2(selector, arrest_data) {
             
 
     // add proportion arrested bar
-    svg.selectAll('.prop-bar')
+    g.selectAll('.prop-bar')
         .data(bar_data)
         .join('rect')
             .attr('class', 'prop-bar')
@@ -305,7 +322,7 @@ function createVis2(selector, arrest_data) {
             
     
     // add a legend
-    const legend = svg.append('g')
+    const legend = g.append('g')
         .attr('class', 'legend')
         .attr('transform', `translate(${width - margin.left - margin.right - 100}, ${margin.top})`);
     
@@ -327,10 +344,30 @@ function createVis2(selector, arrest_data) {
 }
 
 
-const legendData = [
-    {label: "Stops" , color: 'gray'},
-    {label: 'Arrests', color: 'blue'},
-    {label: 'Arrest Rate (%)', color: 'steelblue'}
-]
 
 
+function isElementInView(element) {
+    let rect = element.getBoundingClientRect();
+    return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+    );
+}
+
+function callWhenElementViewable(element, handler) {
+
+    const handleScrollOnce = (() => {
+        let has_run = false;
+
+        return function () {
+            if (has_run == false && isElementInView(element)) {
+                handler();
+                has_run = true;
+            }
+        }
+    });
+
+    window.addEventListener('scroll', handleScrollOnce());
+}
